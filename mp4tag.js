@@ -1,21 +1,31 @@
+// the mpeg-4 spec consists of parts called atoms,
+// which can contain data, or have other atoms in them,
+// nested like a tree.
 function Atom(name, parent){
-
 	
 	if(typeof name == 'boolean'){
 		if(name)
 			this.root = true;
+		else
+			throw new Error('First arg for atom is either a 4 letter tag name, or boolean true for the root');
 	}else if(name.length !== 4)
 		throw new Error('Atoms must have name length of 4');
 	else
 		this.name = name;
 
+	// Atoms technically shouldn't have data AND children. 
+	// but a bunch of them break this rule. This is not
+	// handled by this library yet - but this padding variable
+	// is for the moov.udta.meta atom, which has a historically
+	// different format. See MP4.giveTags for an example.
+	
 	this.padding = 0;
 	this.children = [];
 	this.data;
 	this.parent = parent;
 
 	this.hasChild = function(name){
-		return(this.indexOf(name) !== -1)
+		return(this.chilren.indexOf(name) !== -1)
 	}
 
 	this.getByteLength = function(){
@@ -37,8 +47,9 @@ function Atom(name, parent){
 		i = 0;
 		string += this.name;
 
+		// If actual atom data was printed, it would mostly be a mess of binary data.
 		if(this.data)
-			string += ' => data';
+			string += ' => data' ;
 		else
 			for(var i in this.children)
 				string += '\n' + this.children[i].toString(string, indent + 2)
@@ -119,6 +130,7 @@ MP4.parse = function(data){
 		}
 	}
 
+	// first this to do is establish root - but from then on this can all be recursive.
 	var root = new Atom(true);
 	recursiveParse(root, data);
 
@@ -128,7 +140,7 @@ MP4.parse = function(data){
 }
 
 
-concatBuffers = function(buf1, buf2){
+MP4.concatBuffers = function(buf1, buf2){
 	var newbuf = new Uint8Array(buf1.byteLength + buf2.byteLength);
 
 	var i = buf1.byteLength;
@@ -143,10 +155,13 @@ concatBuffers = function(buf1, buf2){
 
 }
 
+// renders an atom-tree to a jDataView buffer.
 MP4.make = function(root){
 	var output = new jDataView(new Uint8Array());
 
-	// data overrides leaves I guess.
+	// Here you can see data and children being mutually exclusive.
+	// but a more proper version of this would know which atoms
+	// are allowed to break this rule.
 	if(root.data)
 		return root.data;
 
@@ -171,22 +186,37 @@ MP4.make = function(root){
 		}
 
 		
-		var buffer = concatBuffers(header, data);
-		output = concatBuffers(output, buffer);
+		var buffer = this.concatBuffers(header, data);
+		output = this.concatBuffers(output, buffer);
 		
 	}
 	return output;
 }
 
+// Given an mp4 buffer, add quicktime tags 
+// (used by iTunes and recognized by nearly all media players) 
+// based on a js object
 
-MP4.giveTags = function(mp4, title, artist, album, genre, coverImage){
-	var iTunesData = mp4.ensureChild("moov.udta.meta.ilst");
-	var hdlr = iTunesData.parent.addChild(new Atom('hdlr'), 0);
+// TODO: Make this return only a moov.udta.meta atom, and not require 
+// an MP4 buffer - leaving the user to add the atom where desired.
+
+// The only problem with that is that any change to the root atoms requires
+// offsetting the stco data. This could be part of makeMP4, but it's hard
+// to say what's best. For my use cases, this form is the easiest.
+// see here atomicparsley.sourceforge.net/mpeg-4files.html for more info.
+
+MP4.giveTags = function(mp4, tags){
+	if(!tags || typeof tags !== 'object)
+		throw new Error("MP4.giveTags needs to be given tags (as a js object - see docs for options)");
+	var metadata = mp4.ensureChild("moov.udta.meta.ilst");
+	
+	var hdlr = metadata.parent.addChild(new Atom('hdlr'), 0);
 	hdlr.data = new jDataView(new Uint8Array(25));
 	hdlr.data.seek(8);
 	hdlr.data.writeString('mdirappl');
-	iTunesData.parent.padding = 4;
-	var addiTunesData = function(atom, name, str){
+	metadata.parent.padding = 4; // meta atom is an odd one.
+	
+	var addDataAtom = function(atom, name, str){
 		var leaf = atom.addChild(new Atom(name));
 		var data = leaf.addChild(new Atom('data'));
 		if(str){
@@ -200,17 +230,22 @@ MP4.giveTags = function(mp4, title, artist, album, genre, coverImage){
 	}
 
 	// It has to be done in this order for cover art to work... I think?
-	addiTunesData(iTunesData, '\xA9nam', title);
-	addiTunesData(iTunesData, '\xA9ART', artist);
-	addiTunesData(iTunesData, '\xA9alb', album);
-	addiTunesData(iTunesData, '\xA9gen', genre);
+	addDataAtom(metadata, '\xA9nam', title);
+	addDataAtom(metadata, '\xA9ART', artist);
+	addDataAtom(metadata, '\xA9alb', album);
+	addDataAtom(metadata, '\xA9gen', genre);
 
-	var cover = addiTunesData(iTunesData, 'covr');
+	// In my experimenting, it seems cover art has to be the last
+	var cover = addDataAtom(metadata, 'covr');
+	
 	cover.data = new jDataView(new Uint8Array(8));
 	cover.data.writeUint32(13);
-	cover.data = concatBuffers(cover.data, new jDataView(coverImage));
+	cover.data = this.concatBuffers(cover.data, new jDataView(coverImage));
 
-	var offset = (iTunesData.parent.parent.getByteLength());
+	var offset = (metadata.parent.parent.getByteLength());
+	
+	// offset the data in stco, otherwise audio mp4s will be unplayable.
+	// not sure how this affects video.
 	var stco = mp4.ensureChild('moov.trak.mdia.minf.stbl.stco');
 	console.log("Offseting stco by + " + offset);
 
