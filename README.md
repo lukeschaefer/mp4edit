@@ -1,5 +1,4 @@
 # mp4js
-A very minimal mp4 parser and builder in pure js
 
 #About
 
