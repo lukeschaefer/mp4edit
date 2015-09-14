@@ -107,7 +107,16 @@ function Atom(name, parent){
 };
 
 MP4 = {};
-MP4.parse = function(data){
+MP4.parse = function(input){
+	var data = input;
+	
+
+	if(!input.wrapBuffer){
+		if(!jDataView)
+			throw new Error("Include jDataView to use mp4.js");
+		else
+			data = new jDataView(input);
+	}
 
 	var recursiveParse = function(atom, data){
 		var tags = {};
@@ -157,6 +166,8 @@ MP4.concatBuffers = function(buf1, buf2){
 
 // renders an atom-tree to a jDataView buffer.
 MP4.make = function(root){
+	if(!jDataView)
+		throw new Error("Include jDataView to use mp4.js");
 	var output = new jDataView(new Uint8Array());
 
 	// Here you can see data and children being mutually exclusive.
