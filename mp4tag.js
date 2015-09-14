@@ -1,14 +1,3 @@
-jDataView.prototype.writeLimitedString = function(str, buf){
-	if(this.byteLength - buf < this.tell())
-		throw new Error('Buffer outside bounds.');
-	if(str.length > buf){
-		//String is longer than block. Trim it.
-		str = str.substr(0,30);
-	}
-	this.writeString(str);
-	this.skip(buf-str.length);
-}
-
 function Atom(name, parent){
 
 	
