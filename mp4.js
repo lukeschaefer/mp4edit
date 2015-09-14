@@ -220,7 +220,7 @@ MP4.make = function(root){
 // see here atomicparsley.sourceforge.net/mpeg-4files.html for more info.
 
 MP4.giveTags = function(mp4, tags){
-	if(!tags || typeof tags !== 'object)
+	if(!tags || typeof tags !== 'object')
 		throw new Error("MP4.giveTags needs to be given tags (as a js object - see docs for options)");
 	var metadata = mp4.ensureChild("moov.udta.meta.ilst");
 	
