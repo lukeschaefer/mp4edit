@@ -148,6 +148,9 @@ MP4.parse = function(input){
 	
 }
 
+// In node, TypedArray.set() doesn't seem to work with jDataView, which
+// is much faster. It works in chrome - but not sure about other
+// browsers. For now, this will do.
 
 MP4.concatBuffers = function(buf1, buf2){
 	var newbuf = new Uint8Array(buf1.byteLength + buf2.byteLength);
