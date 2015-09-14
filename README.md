@@ -1,10 +1,10 @@
 # mp4js
 
-#About
+##About
 
 This is simply a very small library created for my own uses - which was adding a few iTunes tags to user-uploaded m4a files - which are mp4 files with only audio. All of this has been only tested on audio files. It can parse an MPEG-4 binary buffer into a traversable 'Atom' structure defined by the spec. 
 
-#Getting started
+##Getting started
 
 Simply include mp4.js in your browser project or node, **also** include [jDataView](https://github.com/jDataView/jDataView).
 
