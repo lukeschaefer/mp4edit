@@ -244,25 +244,33 @@ MP4.giveTags = function(mp4, tags){
 	}
 
 	// It has to be done in this order for cover art to work... I think?
-	addDataAtom(metadata, '\xA9nam', title);
-	addDataAtom(metadata, '\xA9ART', artist);
-	addDataAtom(metadata, '\xA9alb', album);
-	addDataAtom(metadata, '\xA9gen', genre);
 
-	// In my experimenting, it seems cover art has to be the last
-	var cover = addDataAtom(metadata, 'covr');
+	if(tags.title)
+		addDataAtom(metadata, '\xA9nam', tags.title);
+	if(tags.artist)
+		addDataAtom(metadata, '\xA9ART', tags.artist);
+	if(tags.album)
+		addDataAtom(metadata, '\xA9alb', tags.album);
+	if(tags.genre)
+		addDataAtom(metadata, '\xA9gen', tags.genre);
 	
-	cover.data = new jDataView(new Uint8Array(8));
-	cover.data.writeUint32(13);
-	cover.data = this.concatBuffers(cover.data, new jDataView(coverImage));
-
-	var offset = (metadata.parent.parent.getByteLength());
+	if(tags.cover){
+		var cover = addDataAtom(metadata, 'covr');
+		
+		cover.data = new jDataView(new Uint8Array(8));
+		cover.data.writeUint32(13);
+		cover.data = this.concatBuffers(cover.data, new jDataView(tags.cover));
+	}
+	
 	
 	// offset the data in stco, otherwise audio mp4s will be unplayable.
 	// not sure how this affects video.
+	var offset = (metadata.parent.parent.getByteLength());
 	var stco = mp4.ensureChild('moov.trak.mdia.minf.stbl.stco');
-	console.log("Offseting stco by + " + offset);
 
+	// This takes a second or more depending on size of file, and speed of computer.
+	// TODO: Get this working with WorkerB - my web worker library to have this run async.
+	
 	stco.data.seek(8);
 	while(stco.data.tell() < stco.data.byteLength){
 		var current = offset + stco.data.getUint32();
