@@ -37,8 +37,8 @@ cover  | cover art | ArrayBuffer of jpeg
 
 ##Example of use:
 
-  // response of ajax request for jpg cover
-  var coverImage = new Uint8Array(imgAjax.response);
+     // response of ajax request for jpg cover
+     var coverImage = new Uint8Array(imgAjax.response);
 	
 	var tags = {
 	    title : "Song Title",
