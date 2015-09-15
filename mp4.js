@@ -25,7 +25,7 @@ function Atom(name, parent){
 	this.parent = parent;
 
 	this.hasChild = function(name){
-		return(this.chilren.indexOf(name) !== -1)
+		return(this.indexOf(name) !== -1)
 	}
 
 	this.getByteLength = function(){
@@ -108,15 +108,14 @@ function Atom(name, parent){
 
 MP4 = {};
 MP4.parse = function(input){
-	var data = input;
-	
+	var data = input;	
 
-	if(!input.wrapBuffer){
-		if(!jDataView)
-			throw new Error("Include jDataView to use mp4.js");
-		else
-			data = new jDataView(input);
-	}
+	
+	if(!jDataView)
+		throw new Error("Include jDataView to use mp4.js");
+	else
+		data = new jDataView(input);
+
 
 	var recursiveParse = function(atom, data){
 		var tags = {};
