@@ -1,10 +1,10 @@
 # mp4js
 
-#About
+##About
 
 This is simply a very small library created for my own uses - which was adding a few iTunes tags to user-uploaded m4a files - which are mp4 files with only audio. All of this has been only tested on audio files. It can parse an MPEG-4 binary buffer into a traversable 'Atom' structure defined by the spec. 
 
-#Getting started
+##Getting started
 
 Simply include mp4.js in your browser project or node, **also** include [jDataView](https://github.com/jDataView/jDataView).
 
@@ -33,6 +33,32 @@ artist  | Artist name |  String
 album  | Album title |  String
 genre  | Song genre |  String
 cover  | cover art | ArrayBuffer of jpeg
+
+------
+
+###Atom.hasChild(String name)
+
+Returns true or false if atom has a subatom named <name>
+
+###Atom.getByteLength()
+
+Returns entire byte length of an atom - same as will be in the header value for the atom. Includes the 8 bytes of header and padding for odd Atoms like meta.
+
+###Atom.toString()
+
+Returns a pretty-printed string to help understand the heirarchy of an atom and all of its children.
+
+###Atom.indexOf(String name)
+
+Returns the index of an atom child. If no child is found with that name, -1 is returned.
+
+###Atom.getChildByName(String name)
+
+Returns the first child of Atom that has the name <name>. If no child is found, returns false.
+
+###Atom.ensureChild(String child)
+
+Searches for a child with name <child>. If none is found, will create one and return it. **String child can include nested names** - such as 'moov.udta.trak'. The method will create neccesary children to accomplish that, and always return an Atom.
 
 ##Example of use:
 
