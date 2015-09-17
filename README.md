@@ -34,6 +34,32 @@ album  | Album title |  String
 genre  | Song genre |  String
 cover  | cover art | ArrayBuffer of jpeg
 
+------
+
+###Atom.hasChild(String name)
+
+Returns true or false if atom has a subatom named <name>
+
+###Atom.getByteLength()
+
+Returns entire byte length of an atom - same as will be in the header value for the atom. Includes the 8 bytes of header and padding for odd Atoms like meta.
+
+###Atom.toString()
+
+Returns a pretty-printed string to help understand the heirarchy of an atom and all of its children.
+
+###Atom.indexOf(String name)
+
+Returns the index of an atom child. If no child is found with that name, -1 is returned.
+
+###Atom.getChildByName(String name)
+
+Returns the first child of Atom that has the name <name>. If no child is found, returns false.
+
+###Atom.ensureChild(String child)
+
+Searches for a child with name <child>. If none is found, will create one and return it. **String child can include nested names** - such as 'moov.udta.trak'. The method will create neccesary children to accomplish that, and always return an Atom.
+
 ##Example of use:
 
      // response of ajax request for jpg cover
