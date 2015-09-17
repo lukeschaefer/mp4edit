@@ -1,7 +1,7 @@
 {
-  "name": "mp4tag",
+  "name": "mp4edit",
   "version": "1.0.0",
-  "description": "Minimal mp4 parser and builder in pure JS. Mostly for use with changing metadata on audio files.",
+  "description": "Minimal mp4 parser and builder in pure JS. Mostly for use with extracting and changing metadata on audio files.",
   "main": "mp4.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,7 +17,7 @@
     "itunes"
   ],
   "author": "Luke Schaefer <las26@njit.edu>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/lukeschaefer/mp4js/issues"
   },
