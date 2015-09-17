@@ -1,14 +1,35 @@
-# mp4edit
+# Installation 
+
+   npm install mp4edit
 
 ## About
 
 This is simply a very small library created for my own uses - which was adding a few iTunes tags to user-uploaded m4a files - which are mp4 files with only audio. All of this has been only tested on audio files. It can parse an MPEG-4 binary buffer into a traversable 'Atom' structure defined by the spec - edit that structure - and rebuild it into an ArrayBuffer which can be downloaded from a browser or written to a file.
 
-## Getting started
+## Quick Start
 
-Simply include mp4.js in your browser project or node, **also** include [jDataView](https://github.com/jDataView/jDataView).
+    // Album cover
+    var coverImage = fs.readFileSync('cover.jpg');
+	
+	// Original MP4
+	var mp4 = fs.readFileSync('mp4file.m4a');	
+	
+	var tags = {
+	    title : "Song Title",
+	    artist : "Song Artist",
+	    album : "Album",
+	    genre : "Any genre",
+	    cover : coverImage
+	};
+	
+	// Parse, add tags, and rebuild audio file.
+	var output = MP4.make( MP4.giveTags( MP4.parse( filebuffer ), tags) );
+	
+	fs.writeFileSync(output, "output.m4a");
 
-## Usage
+
+	
+## Docs
 
 ### MP4.parse(TypedArray mp4)
 
@@ -58,22 +79,4 @@ Returns the first child of Atom that has the name <name>. If no child is found, 
 
 Searches for a child with name <child>. If none is found, will create one and return it. **String child can include nested names** - such as 'moov.udta.trak'. The method will create neccesary children to accomplish that, and always return an Atom.
 
-## Example of use:
 
-    // response of ajax request for jpg cover
-    var coverImage = new Uint8Array(imgAjax.response);
-	
-	var tags = {
-	    title : "Song Title",
-	    artist : "Song Artist",
-	    album : "Album",
-	    genre : "Any genre",
-	    cover : coverImage
-	};
-	
-	// Parse, add tags, and rebuild audio file.
-	var buffer = MP4.make( MP4.giveTags( MP4.parse( filebuffer ), tags) );
-	
-	// Create a blob URL to download:
-	var blob = new Blob([buffer.buffer], {type: 'audio/mp4'});
-	var url = URL.createObjectURL(blob);
