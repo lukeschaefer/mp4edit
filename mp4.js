@@ -1,3 +1,5 @@
+var jDataView = require('jdataview');
+
 // the mpeg-4 spec consists of parts called atoms,
 // which can contain data, or have other atoms in them,
 // nested like a tree.
@@ -283,5 +285,7 @@ MP4.giveTags = function(mp4, tags){
 
 	return mp4;
 };
+
+module.exports = MP4;
 
 

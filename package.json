@@ -1,0 +1,28 @@
+{
+  "name": "mp4tag",
+  "version": "1.0.0",
+  "description": "Minimal mp4 parser and builder in pure JS. Mostly for use with changing metadata on audio files.",
+  "main": "mp4.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukeschaefer/mp4js.git"
+  },
+  "keywords": [
+    "mp4",
+    "js",
+    "metadata",
+    "itunes"
+  ],
+  "author": "Luke Schaefer <las26@njit.edu>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lukeschaefer/mp4js/issues"
+  },
+  "homepage": "https://github.com/lukeschaefer/mp4js",
+  "dependencies": {
+    "jdataview": "^2.5.0"
+  }
+}
