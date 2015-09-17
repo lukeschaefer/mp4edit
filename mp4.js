@@ -115,9 +115,9 @@ MP4.parse = function(input){
 	
 	if(!jDataView)
 		throw new Error("Include jDataView to use mp4.js");
-	else
-		data = new jDataView(input);
-
+	else if(!data.jDataView)
+		data = new jDataView(new Uint8Array(input));
+	
 
 	var recursiveParse = function(atom, data){
 		var tags = {};
@@ -287,5 +287,3 @@ MP4.giveTags = function(mp4, tags){
 };
 
 module.exports = MP4;
-
-
