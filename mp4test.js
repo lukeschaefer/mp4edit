@@ -1,3 +1,5 @@
+jDataView = require('jdataview');
+
 // the mpeg-4 spec consists of parts called atoms,
 // which can contain data, or have other atoms in them,
 // nested like a tree.
@@ -43,16 +45,16 @@ function Atom(name, parent){
 		var indent = indent || 0;
 		var i = indent;
 		while(i--)
-			string += ' ';
+			string += '| ';
 		i = 0;
-		string += this.name;
+		string += (this.root ? 'MP4:' :  this.name);
 
 		// If actual atom data was printed, it would mostly be a mess of binary data.
 		if(this.data)
-			string += ' => data' ;
+			string += ' => ' + (this.padding ? this.padding + 'pad' : '') + ' data' ;
 		else
 			for(var i in this.children)
-				string += '\n' + this.children[i].toString(string, indent + 2)
+				string += '\n' + this.children[i].toString(string, indent + 1)
 		return string
 	}
 
@@ -121,16 +123,22 @@ MP4.parse = function(input){
 	var recursiveParse = function(atom, data){
 		var tags = {};
 
-		while( data.byteLength > 0 ){
+		// Minimum atom size is 8 bytes
+		while( data.byteLength >= 8 ){
 			data.seek(0);
 			var tagLength = (data.getUint32(0));
 			var tagName  = (data.getString(4,4));
+		
+			//TODO: If tagname is meta, give it a padding of four			     
+
 			
 			if(tagName.match(/\w{4}/) && tagLength <= data.byteLength){
 				var child = new Atom(tagName, atom);
 
+				if(tagName == 'meta')
+					child.padding = 4;
 				atom.children.push(child);
-				recursiveParse(child, data.slice(8,tagLength));
+				recursiveParse(child, data.slice(8+child.padding,tagLength));
 				data = data.slice(tagLength, data.byteLength);
 			}else{
 				atom.data = data;
@@ -187,15 +195,13 @@ MP4.make = function(root){
 	
 		var header = new jDataView(new Uint8Array(8+child.padding));
 			
-		var data = MP4.make(root.children[i]);
+		var data = MP4.make(child);
 
 		header.writeUint32(data.byteLength + 8 + child.padding);
 		header.seek(4);
-		
-		
 	
+		// Writing control chars doesn't work with writeStr	
 		for(var j = 0; j < 4; j++){
-		//	console.log(root.children[i].name.charCodeAt(j));
 			header.writeUint8(root.children[i].name.charCodeAt(j))
 		}
 
@@ -282,9 +288,17 @@ MP4.giveTags = function(mp4, tags){
 };
 
 
+var fs = require('fs');
 
-module.exports = { MP4: MP4};
+var testBuffer = fs.readFileSync('test.m4a');
+var parsed = MP4.parse(testBuffer);
+console.log(parsed.toString());
+console.log('Done Parsing.');
+console.log('Starting buffer creation...');
+var finishedBuffer = MP4.make(parsed);
 
+fs.writeFileSync('output.m4a', finishedBuffer.buffer);
+console.log("Complete!");
 
 
 
