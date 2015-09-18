@@ -64,6 +64,10 @@ cover  | cover art | ArrayBuffer of jpeg
 
 The units that parsed mp4 files are reduced to, in adherence to the spec. Each Atom can have data, *or* subatoms as children. Not both - though this rule is broken by several implementations and several atoms.
 
+### Atom(String name)
+
+Constructs an atom with a given four letter name. If given boolean true instead of a name, Atom will act as the mp4 root.
+
 ### Atom.hasChild(String name)
 
 Returns true or false if atom has a subatom named <name>
@@ -71,10 +75,6 @@ Returns true or false if atom has a subatom named <name>
 ### Atom.getByteLength()
 
 Returns entire byte length of an atom - same as will be in the header value for the atom. Includes the 8 bytes of header and padding for odd Atoms like meta.
-
-### Atom.toString()
-
-Returns a pretty-printed string to help understand the heirarchy of an atom and all of its children.
 
 ### Atom.indexOf(String name)
 
@@ -88,4 +88,26 @@ Returns the first child of Atom that has the name <name>. If no child is found, 
 
 Searches for a child with name <child>. If none is found, will create one and return it. **String child can include nested names** - such as 'moov.udta.trak'. The method will create neccesary children to accomplish that, and always return an Atom.
 
+### Atom.toString()
 
+Returns a pretty-printed string to help understand the heirarchy of an atom and all of its children.
+
+### Atom.data
+
+A jDataView of the internal binary data. All jDataView methods can be used, such as .getString().
+
+### Atom.padding
+
+Since, as mentioned earlier, some Atoms break the standard a little bit, padding has been added to help deal with that. Primarily, the moov.udta.meta Atom (containing metadata) has a padding of four, which is unique to it, and would be unable to be worked with without that consideration. MP4.parse will correctly identify a moov.udta.meta Atom and not throw an error. Other Atoms that may break spec will not be accounted for.
+
+### Atom.children
+
+An array of the children, which are Atoms
+
+### Atom.parent
+
+The parent Atom, unless this Atom is root - in which case it's not really an atom anyway.
+
+### Atom.name
+
+The four-letter atom name. Usually set by the constructor and kept the same.

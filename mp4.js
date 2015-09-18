@@ -3,7 +3,7 @@ var jDataView = require('jdataview');
 // the mpeg-4 spec consists of parts called atoms,
 // which can contain data, or have other atoms in them,
 // nested like a tree.
-function Atom(name, parent){
+function Atom(name){
 	
 	if(typeof name == 'boolean'){
 		if(name)
@@ -23,8 +23,8 @@ function Atom(name, parent){
 	
 	this.padding = 0;
 	this.children = [];
-	this.data;
-	this.parent = parent;
+	this.data = new jDataView(new Uint8Array(0));
+	this.parent = false;
 
 	this.hasChild = function(name){
 		return(this.indexOf(name) !== -1)
@@ -128,11 +128,9 @@ MP4.parse = function(input){
 			var tagLength = (data.getUint32(0));
 			var tagName  = (data.getString(4,4));
 		
-			//TODO: If tagname is meta, give it a padding of four			     
-
 			
 			if(tagName.match(/\w{4}/) && tagLength <= data.byteLength){
-				var child = new Atom(tagName, atom);
+				var child = atom.addChild(new Atom(tagName));
 
 				if(tagName == 'meta')
 					child.padding = 4;
