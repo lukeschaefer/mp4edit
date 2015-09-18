@@ -1,13 +1,15 @@
-# Installation 
-
-   npm install mp4edit
-
-## About
+# About 
 
 This is simply a very small library created for my own uses - which was adding a few iTunes tags to user-uploaded m4a files - which are mp4 files with only audio. All of this has been only tested on audio files. It can parse an MPEG-4 binary buffer into a traversable 'Atom' structure defined by the spec - edit that structure - and rebuild it into an ArrayBuffer which can be downloaded from a browser or written to a file.
 
+## Installation 
+
+     npm install mp4edit
+
 ## Quick Start
 
+	MP4 = require('mp4edit');
+	
     // Album cover
     var coverImage = fs.readFileSync('cover.jpg');
 	
@@ -22,14 +24,17 @@ This is simply a very small library created for my own uses - which was adding a
 	    cover : coverImage
 	};
 	
-	// Parse, add tags, and rebuild audio file.
-	var output = MP4.make( MP4.giveTags( MP4.parse( filebuffer ), tags) );
+	// Parse, give tags, and build mp4 file.
+	var output = MP4.make( MP4.giveTags( MP4.parse(filebuffer), tags));
 	
 	fs.writeFileSync(output, "output.m4a");
 
-
 	
-## Docs
+# Usage
+
+## MP4
+
+The entry point, returned by require('mp4edit'). Contains three functions.
 
 ### MP4.parse(TypedArray mp4)
 
@@ -54,6 +59,10 @@ genre  | Song genre |  String
 cover  | cover art | ArrayBuffer of jpeg
 
 ------
+
+## Atom
+
+The units that parsed mp4 files are reduced to, in adherence to the spec. Each Atom can have data, *or* subatoms as children. Not both - though this rule is broken by several implementations and several atoms.
 
 ### Atom.hasChild(String name)
 
