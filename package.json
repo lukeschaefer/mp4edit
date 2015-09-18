@@ -1,6 +1,6 @@
 {
   "name": "mp4edit",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Minimal mp4 parser and builder in pure JS. Mostly for use with extracting and changing metadata on audio files.",
   "main": "mp4.js",
   "scripts": {
