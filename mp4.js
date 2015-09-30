@@ -217,7 +217,7 @@ MP4.make = function(root){
 // TODO: Make this return only a moov.udta.meta atom, and not require 
 // an MP4 buffer - leaving the user to add the atom where desired.
 
-// The only problem with that is that any change to the root atoms requires
+// The only problem with that is any change to the root atoms requires
 // offsetting the stco data. This could be part of makeMP4, but it's hard
 // to say what's best. For my use cases, this form is the easiest.
 // see here atomicparsley.sourceforge.net/mpeg-4files.html for more info.

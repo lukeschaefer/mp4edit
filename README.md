@@ -18,7 +18,7 @@ Or just download the [library](https://raw.githubusercontent.com/lukeschaefer/mp
     // Album cover
     var coverImage = fs.readFileSync('cover.jpg');
 	
-	// Original MP4
+	// Original MP4 (m4a is an mp4 file that contains audio only)
 	var mp4 = fs.readFileSync('mp4file.m4a');	
 	
 	var tags = {
