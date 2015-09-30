@@ -4,7 +4,11 @@ This is simply a very small library created for my own uses - which was adding a
 
 ## Installation 
 
+Using npm:
+
      npm install mp4edit
+
+Or just download the [library](https://raw.githubusercontent.com/lukeschaefer/mp4js/master/mp4.js) and use it the same way - but [jDataView](https://github.com/jDataView/jDataView) must be included too!
 
 ## Quick Start
 
