@@ -284,4 +284,4 @@ MP4.giveTags = function(mp4, tags){
 	return mp4;
 };
 
-module.exports = MP4;
+module.exports = {MP4:MP4, Atom:Atom};

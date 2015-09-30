@@ -12,7 +12,8 @@ Or just download the [library](https://raw.githubusercontent.com/lukeschaefer/mp
 
 ## Quick Start
 
-	MP4 = require('mp4edit');
+	mp4edit = require('mp4edit');
+	MP4 = mp4edit.MP4;
 	
     // Album cover
     var coverImage = fs.readFileSync('cover.jpg');
