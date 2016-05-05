@@ -1,9 +1,7 @@
-var jDataView = require('jdataview');
-
 // the mpeg-4 spec consists of parts called atoms,
 // which can contain data, or have other atoms in them,
 // nested like a tree.
-function Atom(name){
+function Atom(name, parent){
 	
 	if(typeof name == 'boolean'){
 		if(name)
@@ -23,8 +21,8 @@ function Atom(name){
 	
 	this.padding = 0;
 	this.children = [];
-	this.data = new jDataView(new Uint8Array(0));
-	this.parent = false;
+	this.data;
+	this.parent = parent;
 
 	this.hasChild = function(name){
 		return(this.indexOf(name) !== -1)
@@ -65,7 +63,7 @@ function Atom(name){
 		return -1;
 	}
 
-	this.getChildByName = function(name){
+	this.getChild = function(name){
 		for(var i in this.children)
 			if(this.children[i].name == name)
 				return this.children[i];
@@ -79,9 +77,9 @@ function Atom(name){
 		var child = childName[0];
 
 		if(!this.hasChild(child))
-			this.addChild(new Atom(child));
+			this.addChild(child);
 
-		child = this.getChildByName(child);
+		child = this.getChild(child);
 
 
 		if(childName[1]){
@@ -92,25 +90,23 @@ function Atom(name){
 		
 	};
 
-	this.addChild = function(atom, index){
-		atom.parent = this;
+	this.addChild = function(name, index){
+		var atom = new Atom(name, this);
 		if(typeof index === 'undefined'){
 			this.children.push(atom);
 			return atom;
 		}
 		index = Math.max(index,0);
-		index = Math.min(this.children.length, index);
-
-		atom.parent = this;
+		index = Math.min(this.children.length, index);	
 		
 		this.children.splice(index, 0, atom);
 		return atom;
 	};
 };
 
-MP4 = {};
-MP4.parse = function(input){
-	var data = input;	
+// makes a new MP4 object out of data to parse.
+MP4 = function(input){
+	var data = input;
 
 	
 	if(!jDataView)
@@ -127,10 +123,11 @@ MP4.parse = function(input){
 			data.seek(0);
 			var tagLength = (data.getUint32(0));
 			var tagName  = (data.getString(4,4));
-		
+					     
+
 			
-			if(tagName.match(/\w{4}/) && tagLength <= data.byteLength){
-				var child = atom.addChild(new Atom(tagName));
+			if(tagName.match(/[\xA9\w]{4}/) && tagLength <= data.byteLength){
+				var child = new Atom(tagName, atom);
 
 				if(tagName == 'meta')
 					child.padding = 4;
@@ -145,69 +142,75 @@ MP4.parse = function(input){
 	}
 
 	// first this to do is establish root - but from then on this can all be recursive.
-	var root = new Atom(true);
-	recursiveParse(root, data);
-
-	return root;
-
-	
+	this.root = new Atom(true);
+	recursiveParse(this.root, data);
 }
 
+MP4.jDataViewToUint = function(buf){
+	return  new Uint8Array(buf.buffer).subarray(buf.byteOffset,buf.byteOffset+buf.byteLength);	
+}
 // In node, TypedArray.set() doesn't seem to work with jDataView, which
 // is much faster. It works in chrome - but not sure about other
 // browsers. For now, this will do.
 
 MP4.concatBuffers = function(buf1, buf2){
-	var newbuf = new Uint8Array(buf1.byteLength + buf2.byteLength);
+	if(!buf1 || !buf2)
+		debugger;
 
-	var i = buf1.byteLength;
-	buf1.seek(0);
-	while(i)
-		newbuf[buf1.byteLength-(i--)] = buf1.getUint8(buf1.tell());
-	i = buf2.byteLength;
-	buf2.seek(0);
-	while(i)
-		newbuf[buf1.byteLength+buf2.byteLength-(i--)] = buf2.getUint8(buf2.tell());
-	return new jDataView(newbuf);
-
+	var newbuf1 = MP4.jDataViewToUint(buf1);
+	var newbuf2 = MP4.jDataViewToUint(buf2);
+	
+	var newbuf = new Uint8Array(newbuf1.byteLength + newbuf2.byteLength);
+		
+	newbuf.set(newbuf1, 0);
+	newbuf.set(newbuf2, newbuf1.byteLength);
+	newbuf = new jDataView(newbuf);
+	
+	return newbuf;
 }
 
 // renders an atom-tree to a jDataView buffer.
-MP4.make = function(root){
+MP4.prototype.build = function(){
 	if(!jDataView)
 		throw new Error("Include jDataView to use mp4.js");
-	var output = new jDataView(new Uint8Array());
-
-	// Here you can see data and children being mutually exclusive.
-	// but a more proper version of this would know which atoms
-	// are allowed to break this rule.
-	if(root.data)
-		return root.data;
-
-	var i;
-	for(i = 0; i<root.children.length; i++){
-		var child = root.children[i];
-		var buffer = new Uint8Array();
-		var header;
 	
-		var header = new jDataView(new Uint8Array(8+child.padding));
+	var recursiveBuilder = function(atom){
+	
+		// Here you can see data and children being mutually exclusive.
+		// but a more proper version of this would know which atoms
+		// are allowed to break this rule.
+		if(atom.data)
+			return atom.data;
 			
-		var data = MP4.make(child);
+		// otherwise we got children to parse.
+		var i;
+		var output = new jDataView(new Uint8Array());
+		
+		for(i = 0; i<atom.children.length; i++){
+			var child = atom.children[i];
+			var buffer = new Uint8Array();
+			
+			var header = new jDataView(new Uint8Array(8+child.padding));
+				
+			var data = recursiveBuilder(child);
 
-		header.writeUint32(data.byteLength + 8 + child.padding);
-		header.seek(4);
-	
-		// Writing control chars doesn't work with writeStr	
-		for(var j = 0; j < 4; j++){
-			header.writeUint8(root.children[i].name.charCodeAt(j))
+			header.writeUint32(data.byteLength + 8 + child.padding);
+			header.seek(4);
+		
+			// Writing control chars doesn't work with writeStr	
+			for(var j = 0; j < 4; j++){
+				header.writeUint8(atom.children[i].name.charCodeAt(j))
+			}			
+			
+			var buffer = MP4.concatBuffers(header, data);
+			output = MP4.concatBuffers(output, buffer);		
 		}
-
-		
-		var buffer = this.concatBuffers(header, data);
-		output = this.concatBuffers(output, buffer);
-		
+		return output;	
 	}
-	return output;
+	
+	return recursiveBuilder(this.root);
+	
+	
 }
 
 // Given an mp4 buffer, add quicktime tags 
@@ -217,25 +220,27 @@ MP4.make = function(root){
 // TODO: Make this return only a moov.udta.meta atom, and not require 
 // an MP4 buffer - leaving the user to add the atom where desired.
 
-// The only problem with that is any change to the root atoms requires
+// The only problem with that is that any change to the root atoms requires
 // offsetting the stco data. This could be part of makeMP4, but it's hard
 // to say what's best. For my use cases, this form is the easiest.
 // see here atomicparsley.sourceforge.net/mpeg-4files.html for more info.
 
-MP4.giveTags = function(mp4, tags){
+MP4.prototype.giveTags = function(tags){
 	if(!tags || typeof tags !== 'object')
 		throw new Error("MP4.giveTags needs to be given tags (as a js object - see docs for options)");
-	var metadata = mp4.ensureChild("moov.udta.meta.ilst");
 	
-	var hdlr = metadata.parent.addChild(new Atom('hdlr'), 0);
+	var offset = this.root.ensureChild("moov.udta").getByteLength();
+	
+	var hdlr = this.root.ensureChild('moov.udta.meta.hdlr');
 	hdlr.data = new jDataView(new Uint8Array(25));
 	hdlr.data.seek(8);
-	hdlr.data.writeString('mdirappl');
+	hdlr.data.writeString('mdirappl');	
+	
+	var metadata = this.root.ensureChild("moov.udta.meta.ilst");
 	metadata.parent.padding = 4; // meta atom is an odd one.
 	
-	var addDataAtom = function(atom, name, str){
-		var leaf = atom.addChild(new Atom(name));
-		var data = leaf.addChild(new Atom('data'));
+	var addDataAtom = function(name, str){
+		var data = metadata.ensureChild(name+'.data');
 		if(str){
 			data.data = new jDataView(new Uint8Array(str.length + 8));
 			data.data.seek(3);
@@ -249,16 +254,16 @@ MP4.giveTags = function(mp4, tags){
 	// It has to be done in this order for cover art to work... I think?
 
 	if(tags.title)
-		addDataAtom(metadata, '\xA9nam', tags.title);
+		addDataAtom('\xA9nam', tags.title);
 	if(tags.artist)
-		addDataAtom(metadata, '\xA9ART', tags.artist);
+		addDataAtom('\xA9ART', tags.artist);
 	if(tags.album)
-		addDataAtom(metadata, '\xA9alb', tags.album);
+		addDataAtom('\xA9alb', tags.album);
 	if(tags.genre)
-		addDataAtom(metadata, '\xA9gen', tags.genre);
+		addDataAtom('\xA9gen', tags.genre);
 	
 	if(tags.cover){
-		var cover = addDataAtom(metadata, 'covr');
+		var cover = addDataAtom('covr');
 		
 		cover.data = new jDataView(new Uint8Array(8));
 		cover.data.writeUint32(13);
@@ -268,8 +273,8 @@ MP4.giveTags = function(mp4, tags){
 	
 	// offset the data in stco, otherwise audio mp4s will be unplayable.
 	// not sure how this affects video.
-	var offset = (metadata.parent.parent.getByteLength());
-	var stco = mp4.ensureChild('moov.trak.mdia.minf.stbl.stco');
+	offset -= metadata.parent.parent.getByteLength();
+	var stco = this.root.ensureChild('moov.trak.mdia.minf.stbl.stco');
 
 	// This takes a second or more depending on size of file, and speed of computer.
 	// TODO: Get this working with WorkerB - my web worker library to have this run async.
@@ -281,7 +286,28 @@ MP4.giveTags = function(mp4, tags){
 		stco.data.writeUint32(current);
 	}
 
-	return mp4;
+	return this;
 };
 
-module.exports = {MP4:MP4, Atom:Atom};
+MP4.prototype.getTags = function(){	
+	var metadata = this.root.ensureChild("moov.udta.meta.ilst");
+		
+	var getDataAtom = function(name){
+		var leaf = metadata.getChild(name);	
+		if(!leaf || !leaf.children[0])
+			return false;
+
+		var data = leaf.children[0].data;	
+		data.seek(8);
+		return data.getString();
+	}
+
+	var tags = {};
+
+	tags.title = getDataAtom('\xA9nam');
+	tags.artist = getDataAtom('\xA9ART');
+	tags.album = getDataAtom('\xA9alb');
+	tags.genre = getDataAtom('\xA9gen');
+	
+	return tags;
+}
