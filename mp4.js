@@ -53,7 +53,7 @@ function Atom(name, parent){
 		else
 			for(var i in this.children)
 				string += '\n' + this.children[i].toString(string, indent + 1)
-		return string
+		return string;
 	}
 
 	this.indexOf = function(name){
@@ -107,7 +107,7 @@ function Atom(name, parent){
 // makes a new MP4 object out of data to parse.
 MP4 = function(input){
 	var data = input;
-
+	this.isValid = false;
 	
 	if(!jDataView)
 		throw new Error("Include jDataView to use mp4.js");
@@ -144,6 +144,9 @@ MP4 = function(input){
 	// first this to do is establish root - but from then on this can all be recursive.
 	this.root = new Atom(true);
 	recursiveParse(this.root, data);
+
+	this.isValid = this.root.hasChild('ftyp');
+	//console.log(this.root.toString());
 }
 
 MP4.jDataViewToUint = function(buf){
@@ -209,8 +212,6 @@ MP4.prototype.build = function(){
 	}
 	
 	return recursiveBuilder(this.root);
-	
-	
 }
 
 // Given an mp4 buffer, add quicktime tags 
@@ -224,7 +225,6 @@ MP4.prototype.build = function(){
 // offsetting the stco data. This could be part of makeMP4, but it's hard
 // to say what's best. For my use cases, this form is the easiest.
 // see here atomicparsley.sourceforge.net/mpeg-4files.html for more info.
-
 MP4.prototype.giveTags = function(tags){
 	if(!tags || typeof tags !== 'object')
 		throw new Error("MP4.giveTags needs to be given tags (as a js object - see docs for options)");
@@ -242,6 +242,12 @@ MP4.prototype.giveTags = function(tags){
 	var addDataAtom = function(name, str){
 		var data = metadata.ensureChild(name+'.data');
 		if(str){
+			if(name == 'trkn'){
+				data.data = new jDataView(new Uint8Array(40));
+				data.data.seek(8);
+				data.data.writeUint32(str)
+				return data;
+			}
 			data.data = new jDataView(new Uint8Array(str.length + 8));
 			data.data.seek(3);
 			data.data.writeUint8(1);
@@ -252,7 +258,8 @@ MP4.prototype.giveTags = function(tags){
 	}
 
 	// It has to be done in this order for cover art to work... I think?
-
+	if(tags.track)
+		addDataAtom('trkn', tags.track);
 	if(tags.title)
 		addDataAtom('\xA9nam', tags.title);
 	if(tags.artist)
@@ -265,15 +272,27 @@ MP4.prototype.giveTags = function(tags){
 	if(tags.cover){
 		var cover = addDataAtom('covr');
 		
+		var BASE64_MARKER = ';base64,';
+
+		var base64Index = tags.cover.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
+		var base64 = tags.cover.substring(base64Index);
+		var raw = atob(base64);
+		var rawLength = raw.length;
+		var array = new Uint8Array(new ArrayBuffer(rawLength));
+
+		for(i = 0; i < rawLength; i++) {
+			array[i] = raw.charCodeAt(i);
+		}	
+		
 		cover.data = new jDataView(new Uint8Array(8));
 		cover.data.writeUint32(13);
-		cover.data = this.concatBuffers(cover.data, new jDataView(tags.cover));
+		cover.data = MP4.concatBuffers(cover.data, new jDataView(array));
 	}
 	
 	
 	// offset the data in stco, otherwise audio mp4s will be unplayable.
 	// not sure how this affects video.
-	offset -= metadata.parent.parent.getByteLength();
+	offset = this.root.ensureChild("moov.udta").getByteLength() - offset;
 	var stco = this.root.ensureChild('moov.trak.mdia.minf.stbl.stco');
 
 	// This takes a second or more depending on size of file, and speed of computer.
@@ -289,7 +308,7 @@ MP4.prototype.giveTags = function(tags){
 	return this;
 };
 
-MP4.prototype.getTags = function(){	
+MP4.prototype.getCommonTags = function(){	
 	var metadata = this.root.ensureChild("moov.udta.meta.ilst");
 		
 	var getDataAtom = function(name){
@@ -299,15 +318,33 @@ MP4.prototype.getTags = function(){
 
 		var data = leaf.children[0].data;	
 		data.seek(8);
-		return data.getString();
+		return data;
 	}
 
 	var tags = {};
 
-	tags.title = getDataAtom('\xA9nam');
-	tags.artist = getDataAtom('\xA9ART');
-	tags.album = getDataAtom('\xA9alb');
-	tags.genre = getDataAtom('\xA9gen');
+	tags.title = getDataAtom('\xA9nam').getString();
+	tags.artist = getDataAtom('\xA9ART').getString();
+	tags.album = getDataAtom('\xA9alb').getString();
+	tags.genre = getDataAtom('\xA9gen').getString();
+	tags.cover = false;
+	
+	
+	var cover = getDataAtom('covr');
+	if(cover){	
+		var data = cover.getBytes();
+		var CHUNK_SIZE = 0x8000; //arbitrary number
+		var index = 0;
+		var length = data.length;
+		var result = '';
+		var slice;
+		while (index < length) {
+			slice = data.subarray(index, Math.min(index + CHUNK_SIZE, length)); 
+			result += String.fromCharCode.apply(null, slice);
+			index += CHUNK_SIZE;
+		}	
+		tags.cover = 'data:image/gif;base64,' + btoa(result);
+	}
 	
 	return tags;
 }
