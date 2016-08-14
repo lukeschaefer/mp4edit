@@ -15,16 +15,25 @@ Or just download the [library](https://raw.githubusercontent.com/lukeschaefer/mp
 
 	// In a browser environment, listening to a file-picker:
 	var fileTags;
+	var mp4;
 	var reader = new FileReader();			
 	reader.readAsArrayBuffer(uploadedFile);
 	
 	reader.onload = function(data){
-		var mp4 = new MP4(data.target.result);
+		mp4 = new MP4(data.target.result);
 		fileTags = mp4.getCommonTags(); // Gets cover, album, artist, title and track number.
 		// fileTags.cover can be bound to an <img src='{{cover}}'>
 	});		
 	
-
+	// ----- At some later point -------
+	
+	mp4.giveTags(newTags); // In the form of an object with optionally cover, album, artist, title or track keys.
+	var blob = new Blob([mp4.build().buffer], {type: 'audio/mp4'});
+	var url = URL.createObjectURL(blob);
+	
+	// The client opening the URL will download it. Or appending an <a> element and calling 'click' on it
+	
+	URL.revokeObjectURL(url);
 
 	
 # Usage
