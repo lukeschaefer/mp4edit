@@ -12,48 +12,35 @@ Or just download the [library](https://raw.githubusercontent.com/lukeschaefer/mp
 
 ## Quick Start
 
-	mp4edit = require('mp4edit');
-	MP4 = mp4edit.MP4;
+
+	// In a browser environment, listening to a file-picker:
+	var fileTags;
+	var reader = new FileReader();			
+	reader.readAsArrayBuffer(uploadedFile);
 	
-    // Album cover
-    var coverImage = fs.readFileSync('cover.jpg');
+	reader.onload = function(data){
+		var mp4 = new MP4(data.target.result);
+		fileTags = mp4.getCommonTags(); // Gets cover, album, artist, title and track number.
+		// fileTags.cover can be bound to an <img src='{{cover}}'>
+	});		
 	
-	// Original MP4 (m4a is an mp4 file that contains audio only)
-	var mp4 = fs.readFileSync('mp4file.m4a');	
-	
-	var tags = {
-	    title : "Song Title",
-	    artist : "Song Artist",
-	    album : "Album",
-	    genre : "Any genre",
-	    cover : coverImage
-	};
-	
-	// Parse, give tags, and build mp4 file.
-	var output = MP4.make( MP4.giveTags( MP4.parse(filebuffer), tags));
-	
-	fs.writeFileSync(output, "output.m4a");
+
 
 	
 # Usage
 
-## MP4
-
-The entry point, returned by require('mp4edit'). Contains three functions.
-
-### MP4.parse(TypedArray mp4)
+### MP4(Buffer mp4)
 
 Given an ArrayBuffer (or other) containing mp4 binary data, will return a root Atom, containing the rest of the structure nested within.
 
-### MP4.make(Atom root)
+### MP4.prototype.build()
 
 Given a root Atom, will create a jDataView with the binary data. This create the Atom headers, which have four bytes in them denoting their length.
 
-### MP4.giveTags(Atom root, Object tags)
+### MP4.prototype.giveTags(Object tags)
 
-Given an Atom root, and a JS object with the predefined tags (shown below) this will return an Atom root with identical children as the original, as well as metadata conforming to how iTunes makes it (which nearly all media players will recognize). To do this, it has to offset the stco atom (see [here](atomicparsley.sourceforge.net/mpeg-4files.html)). I'm unsure how this would work with non audio files.
+Given a JS object with the predefined tags (shown below) this will update the internal tree structure with the tags, and offset the stco atom (see [here](atomicparsley.sourceforge.net/mpeg-4files.html)).
 
-All of these tags are optional, and for the purpose of m4a files - I'm unsure if video players would care about this data:
 
 Key  | Value  | type
 ------------- | -------------  |  ------------
