@@ -32,7 +32,8 @@ const url = URL.createObjectURL(blob);
 
 // The client opening the URL will download it. Or appending an <a> element and calling 'click' on it
 
-URL.revokeObjectURL(url);```
+URL.revokeObjectURL(url);
+```
 
 	
 # Usage
