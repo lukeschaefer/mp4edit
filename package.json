@@ -1,7 +1,7 @@
 {
   "name": "mp4edit",
   "version": "1.0.6",
-  "description": "Minimal mp4 parser and builder in pure JS. Mostly for use with extracting and changing metadata on audio files.",
+  "description": "Minimal mp4 parser and builder in typescript. Built for use with extracting and changing metadata on audio files.",
   "main": "mp4.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,17 +12,14 @@
   },
   "keywords": [
     "mp4",
-    "js",
+    "typescript",
     "metadata",
     "itunes"
   ],
-  "author": "Luke Schaefer <las26@njit.edu>",
+  "author": "Luke Schaefer",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/lukeschaefer/mp4js/issues"
   },
-  "homepage": "https://github.com/lukeschaefer/mp4js",
-  "dependencies": {
-    "jdataview": "^2.5.0"
-  }
+  "homepage": "https://github.com/lukeschaefer/mp4js"
 }
