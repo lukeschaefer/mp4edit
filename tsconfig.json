@@ -4,6 +4,7 @@
       "ESNext",
       "dom"
     ],
+    "declaration": true,
     "outDir": "lib",
     "removeComments": true,
     "target": "ES2020",
@@ -25,7 +26,7 @@
     "noUnusedParameters": true // Report errors on unused parameters in functions
   },
   "include": [
-    "./**/*.ts"
+    "./src/**/*.ts"
   ],
   "exclude": [
     "node_modules/**/*"

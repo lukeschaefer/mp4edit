@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import {MP4} from '../mp4';
+import {MP4} from '../src/mp4';
 import {readFileSync} from 'fs';
 
 // Get test file using readFileSync from ./test-file.mp4:
