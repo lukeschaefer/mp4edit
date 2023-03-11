@@ -12,7 +12,9 @@
  * this library - for more info on why, see the comment at the top of AtomData.ts 
 */
 export class AtomData {
-  public byteLength: number;
+  get byteLength() {
+    return this.buffer.byteLength;
+  };
   private position = 0;
   constructor(public buffer: Uint8Array = new Uint8Array(0)) { }
 
@@ -88,7 +90,6 @@ export class AtomData {
   }
 
   slice(start: number, end: number) {
-    this.buffer.slice(start, end);
-    return this;
+    return new AtomData(this.buffer.slice(start, end));
   }
 }

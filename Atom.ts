@@ -13,12 +13,11 @@ export class Atom {
   // different format. See MP4.giveTags for an example.
   padding: number = 0;
   children: Atom[] = [];
-  parent: Atom | undefined;
   data: AtomData;
   root = false;
   name: string;
 
-  constructor(name: string) {
+  constructor(name: string, public parent?: Atom) {
     if (name == 'root') this.root = true;
     if (name.length !== 4) throw new Error('Atoms must have name length of 4');
     this.name = name;
@@ -73,7 +72,7 @@ export class Atom {
   }
 
   addChild(name: string, index?: number) {
-    var atom = new Atom(name);
+    var atom = new Atom(name, this);
     if (index === undefined) {
       this.children.push(atom);
       return atom;

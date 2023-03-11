@@ -16,7 +16,7 @@
     "sourceRoot": "/",
     "alwaysStrict": true,
     "allowUnreachableCode": false,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "strictNullChecks": true,
     // Linter Checks
     "noImplicitReturns": true,

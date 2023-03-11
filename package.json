@@ -4,7 +4,7 @@
   "description": "Minimal mp4 parser and builder in typescript. Built for use with extracting and changing metadata on audio files.",
   "main": "mp4.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --env=node --colors test"
   },
   "repository": {
     "type": "git",
@@ -21,5 +21,13 @@
   "bugs": {
     "url": "https://github.com/lukeschaefer/mp4js/issues"
   },
-  "homepage": "https://github.com/lukeschaefer/mp4js"
+  "homepage": "https://github.com/lukeschaefer/mp4js",
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "ts-jest": "^29.0.5",
+    "ts-node": "^10.9.1"
+  },
+  "dependencies": {
+    "jdataview": "^2.5.0"
+  }
 }

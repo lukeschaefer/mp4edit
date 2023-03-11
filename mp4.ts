@@ -7,18 +7,20 @@ export class MP4 {
   data: AtomData;
   root: Atom;
 
-  constructor(input: number[]) {
+  constructor(input: number[] | Uint8Array) {
     this.data = new AtomData(new Uint8Array(input));
 
     const recursiveParse = function (atom: Atom, data: AtomData) {
       // Minimum atom size is 8 bytes
       while (data.byteLength >= 8) {
+
         data.seek(0);
         const tagLength = (data.getUint32(0));
         const tagName = (data.getString(4, 4));
 
+
         if (tagName.match(/[\xA9\w]{4}/) && tagLength <= data.byteLength) {
-          const child = new Atom(tagName);
+          const child = new Atom(tagName, atom);
 
           if (tagName == 'meta')
             child.padding = 4;
@@ -52,7 +54,7 @@ export class MP4 {
       // otherwise we got children to parse.
       let output = new AtomData(new Uint8Array(0));
 
-      atom.children.forEach((child, i) => {
+      atom.children.forEach((child) => {
         const header = new AtomData(new Uint8Array(8 + child.padding));
 
         const data = recursiveBuilder(child);
@@ -86,13 +88,14 @@ export class MP4 {
   // to say what's best. For my use cases, this form is the easiest.
   // see here atomicparsley.sourceforge.net/mpeg-4files.html for more info.
   giveTags(tags: {
-    track: string,
-    title: string,
-    artist: string,
-    album: string,
-    genre: string,
-    cover: string
+    track?: string,
+    title?: string,
+    artist?: string,
+    album?: string,
+    genre?: string,
+    cover?: string
   }) {
+    console.log("Giving tags!");
     let offset = this.root.ensureChild("moov.udta").getByteLength();
 
     const hdlr = this.root.ensureChild('moov.udta.meta.hdlr');
@@ -104,6 +107,7 @@ export class MP4 {
     metadata.parent!.padding = 4; // meta atom is an odd one.
 
     const addDataAtom = function (name: string, str: string | number) {
+      console.log("Adding data atom: " + name + " with value " + str + "")
       const data = metadata.ensureChild(name + '.data');
       if (str) {
         // Track number is a special case.
@@ -132,6 +136,7 @@ export class MP4 {
     if (tags.genre) addDataAtom('\xA9gen', tags.genre);
 
     if (tags.cover) {
+      console.log("Adding cover art!");
       const cover = addDataAtom('covr', '');
 
       const BASE64_MARKER = ';base64,';
@@ -162,8 +167,8 @@ export class MP4 {
 
     stco.data.seek(8);
     while (stco.data.tell() < stco.data.byteLength) {
+      console.log("Offsetting stco data by " + offset + " bytes.")
       const current = BigInt(offset) + stco.data.getUint32();
-      stco.data.skip(-4);
       stco.data.writeUint32(current);
     }
 
