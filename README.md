@@ -1,6 +1,6 @@
 # About 
 
-This is simply a very small library created for my own uses - which was adding a few iTunes tags to user-uploaded m4a files - which are mp4 files with only audio. All of this has been only tested on audio files. It can parse an MPEG-4 binary buffer into a traversable 'Atom' structure defined by the spec - edit that structure - and rebuild it into an ArrayBuffer which can be downloaded from a browser or written to a file.
+This is a micro library for parsing and editing mp4 files. It's only barely functional, but it does what I needed - which is adding a few iTunes tags to user-uploaded mp4 files. All of this has been only tested on audio files. It can parse an MPEG-4 binary buffer into a traversable 'Atom' structure defined by the spec - edit that structure - and rebuild it into an ArrayBuffer which can be downloaded from a browser or written to a file.
 
 ## Installation 
 
@@ -8,32 +8,31 @@ Using npm:
 
      npm install mp4edit
 
-Or just download the [library](https://raw.githubusercontent.com/lukeschaefer/mp4js/master/mp4.js) and use it the same way - but [jDataView](https://github.com/jDataView/jDataView) must be included too!
 
 ## Quick Start
 
+```javascript
+// In a browser environment, listening to a file-picker:
+const fileTags;
+const mp4;
+const reader = new FileReader();			
+reader.readAsArrayBuffer(uploadedFile);
 
-	// In a browser environment, listening to a file-picker:
-	var fileTags;
-	var mp4;
-	var reader = new FileReader();			
-	reader.readAsArrayBuffer(uploadedFile);
-	
-	reader.onload = function(data){
-		mp4 = new MP4(data.target.result);
-		fileTags = mp4.getCommonTags(); // Gets cover, album, artist, title and track number.
-		// fileTags.cover can be bound to an <img src='{{cover}}'>
-	});		
-	
-	// ----- At some later point -------
-	
-	mp4.giveTags(newTags); // In the form of an object with optionally cover, album, artist, title or track keys.
-	var blob = new Blob([mp4.build().buffer], {type: 'audio/mp4'});
-	var url = URL.createObjectURL(blob);
-	
-	// The client opening the URL will download it. Or appending an <a> element and calling 'click' on it
-	
-	URL.revokeObjectURL(url);
+reader.onload = function(data){
+	mp4 = new MP4(data.target.result);
+	fileTags = mp4.getCommonTags(); // Gets cover, album, artist, title and track number.
+	// fileTags.cover can be bound to an <img src='{{cover}}'>
+});		
+
+// ----- At some later point -------
+
+mp4.giveTags(newTags); // In the form of an object with optionally cover, album, artist, title or track keys.
+const blob = new Blob([mp4.build().buffer], {type: 'audio/mp4'});
+const url = URL.createObjectURL(blob);
+
+// The client opening the URL will download it. Or appending an <a> element and calling 'click' on it
+
+URL.revokeObjectURL(url);```
 
 	
 # Usage
